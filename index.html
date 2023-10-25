@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/@asgardeo/auth-spa@latest/dist/asgardeo-spa.production.min.js"></script>
+</head>
+<style>
+      body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+            sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+      }
+</style>
+<body>
+    <h3 style="text-align: center;">XSM Sample JS App</h3>
+    <div style="text-align: center;">
+        <!-- Authenticated View --->
+        <div id="authenticated-view" style="display: none;">
+            <h4 id="username"></h4>
+           <button onClick="auth.signOut()">Log Out</button>
+        </div>
+        <!-- Un-Authenticated View --->
+        <div id="unauthenticated-view" style="display: none;">
+           <button onClick="auth.signIn()">Log In</button>
+        </div>
+     </div>  
+</body>
+<script>
+    var auth = AsgardeoAuth.AsgardeoSPAClient.getInstance();
+    
+    var config = {
+        signInRedirectURL: "http://127.0.0.1:5500",
+        signOutRedirectURL: "http://127.0.0.1:5500",
+        clientID: "bXOEvz4v797WCssZtyx6VNudukAa",
+        baseUrl: "https://api.asgardeo.io/t/vams",
+        scope: [ "openid","profile" ]
+    }
+    
+    auth.initialize(config);
+
+    (async () => {
+       let user = undefined;
+
+       if (AsgardeoAuth.SPAUtils.hasAuthSearchParamsInURL()) {
+             user = await auth.signIn({ callOnlyOnRedirect: true });
+       } else {
+             user = await auth.trySignInSilently();
+       }
+
+       console.log("user", user);
+       if (user) {
+             document.getElementById("authenticated-view").style.display = "block";
+             document.getElementById("unauthenticated-view").style.display = "none";
+             document.getElementById("username").innerHTML = user.username;
+       } else {
+             document.getElementById("authenticated-view").style.display = "none";
+             document.getElementById("unauthenticated-view").style.display = "block";
+       }
+    })();
+</script>
+</html>
