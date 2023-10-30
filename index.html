@@ -1,66 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="https://unpkg.com/@asgardeo/auth-spa@latest/dist/asgardeo-spa.production.min.js"></script>
-</head>
-<style>
-      body {
+    <title>XSM Sample Javascript App</title>
+    <style>
+        body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-            sans-serif;
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-      }
-</style>
+            text-align: center;
+        }
+
+        code {
+            font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+                monospace;
+        }
+    </style>
+</head>
+
 <body>
-    <h3 style="text-align: center;">XSM Sample JS App</h3>
-    <div style="text-align: center;">
-        <!-- Authenticated View --->
-        <div id="authenticated-view" style="display: none;">
-            <h4 id="username"></h4>
-           <button onClick="auth.signOut()">Log Out</button>
-        </div>
-        <!-- Un-Authenticated View --->
-        <div id="unauthenticated-view" style="display: none;">
-           <button onClick="auth.signIn()">Log In</button>
-        </div>
-     </div>  
+    <h3>XSM Sample Javascript App</h3>
+    <div id="app"></div>
+    <script>
+        const config = {
+            signInRedirectURL: "http://127.0.0.1:5500/", //callback_url of the application
+            clientID: "551buYSQGLyyqQW4AY8cYZ6CbSwa", //client_id of the application
+            domain: 'finvdom', //domain name
+            baseUrl: "https://demo-product.3insys.com:8202",
+            scope: ["openid", "profile"]
+        };
+
+        const appContainer = document.getElementById("app");
+
+        const queryString = window.location.search;
+        const urlParam = new URLSearchParams(queryString);
+        const authToken = urlParam.get('token');
+
+        let token = localStorage.getItem('token');
+
+        if (authToken) {
+            setToken(authToken);
+            checkingInitially(authToken);
+        } else if (token) {
+            checkingInitially(token);
+        } else {
+            showLoggedOutState();
+        }
+
+        function checkingInitially(authToken) {
+            if (authToken || token) {
+                showLoggedInState();
+            } else {
+                showLoggedOutState();
+            }
+        }
+
+        function showLoggedInState() {
+            appContainer.innerHTML = '<button onclick="handleLogout()">Logout</button>';
+        }
+
+        function showLoggedOutState() {
+            appContainer.innerHTML = '<button onclick="handleLogin()">Login</button>';
+        }
+
+        function handleLogin() {
+            const newTabUrl = `${config.baseUrl}/login?domain=${config.domain}&client_id=${config.clientID}&red_url=${config.signInRedirectURL}`;
+            window.location.href = newTabUrl;
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            token = null;
+            showLoggedOutState();
+        }
+
+        function setToken(authToken) {
+            localStorage.setItem('token', authToken);
+            token = authToken;
+            showLoggedInState();
+        }
+    </script>
 </body>
-<script>
-    var auth = AsgardeoAuth.AsgardeoSPAClient.getInstance();
-    
-    var config = {
-        signInRedirectURL: "http://127.0.0.1:5500",
-        signOutRedirectURL: "http://127.0.0.1:5500",
-        clientID: "bXOEvz4v797WCssZtyx6VNudukAa",
-        baseUrl: "https://api.asgardeo.io/t/vams",
-        scope: [ "openid","profile" ]
-    }
-    
-    auth.initialize(config);
-
-    (async () => {
-       let user = undefined;
-
-       if (AsgardeoAuth.SPAUtils.hasAuthSearchParamsInURL()) {
-             user = await auth.signIn({ callOnlyOnRedirect: true });
-       } else {
-             user = await auth.trySignInSilently();
-       }
-
-       console.log("user", user);
-       if (user) {
-             document.getElementById("authenticated-view").style.display = "block";
-             document.getElementById("unauthenticated-view").style.display = "none";
-             document.getElementById("username").innerHTML = user.username;
-       } else {
-             document.getElementById("authenticated-view").style.display = "none";
-             document.getElementById("unauthenticated-view").style.display = "block";
-       }
-    })();
-</script>
 </html>
